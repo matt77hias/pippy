@@ -1,7 +1,7 @@
 # pippy
 
 ## About
-Point Inside Polygon Utilities
+Point Inside Polygon (pip) utilities supporting *crossing* and *winding number* pip tests.
 
 ## Use
 ```python
