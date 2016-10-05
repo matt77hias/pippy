@@ -62,6 +62,7 @@ def surface_area_hitmiss(f, p_vs, r, samples=1000, plot=True, plotter=None):
     if plot and plotter is None:
         plotter = Plotter2D()
     if plot:
+        plotter.plot_AABB([r[0], r[2]], [r[1], r[3]], color='k')
         plotter.plot_contour(p_vs, color='b')
     
     window_x = (r[1] - r[0])
