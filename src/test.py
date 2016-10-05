@@ -12,7 +12,7 @@ def test_polygon1():
     return p_vs, mean, window
 
 from mc_tools import vis_bias, vis_MSE, vis_RMSE
-def test(exp=7):
+def test(exp=10):
     nb_samples=[2**i for i in range(1, exp+1)]
     p_vs, mean, window = test_polygon1()
     
