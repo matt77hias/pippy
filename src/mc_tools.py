@@ -13,7 +13,7 @@ def calculate_bias(f, mean, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPL
     for i in range(size):
         samples = np.array([f(nb_samples[i]) for run in range(nb_runs)])
         bias[i] = np.mean(samples) - mean
-    return bias
+    return bias / mean #relative bias
 
 def calculate_MSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
     size = len(nb_samples)
@@ -41,33 +41,60 @@ def calculate_RMSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_
 ## Visualization of Characteristic Values
 ###################################################################################################################################################################################
 def vis_bias(f, mean, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    _vis_bias(bias=calculate_bias(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_samples=nb_samples)
+    _vis_bias(f.__name__, bias=calculate_bias(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_samples=nb_samples)
 
-def _vis_bias(bias, nb_samples=DEFAULT_NB_SAMPLES):
+def _vis_bias(name, bias, nb_samples=DEFAULT_NB_SAMPLES):
     plt.figure()
-    plt.semilogx(nb_samples, bias, ls='-', marker='.', color='g', label='f')
+    
+    plt.semilogx(nb_samples, bias, ls='None', marker='o', color='g', label=name)
+    
     plt.title('Bias')
-    plt.ylabel('# samples')
-    plt.xlabel('# bias')
+    plt.xlabel('# samples')
+    plt.ylabel('# bias')
+    plt.legend()
 
 def vis_MSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    _vis_MSE(MSE=calculate_MSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_samples=nb_samples)
+    _vis_MSE(f.__name__, MSE=calculate_MSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_samples=nb_samples)
 
-def _vis_MSE(MSE, nb_samples=DEFAULT_NB_SAMPLES):
+def _vis_MSE(name, MSE, nb_samples=DEFAULT_NB_SAMPLES):
     plt.figure()
-    plt.loglog(nb_samples, MSE, ls='-', marker='.', color='g', label='f')
-    plt.loglog(nb_samples, np.power(nb_samples, -1.0), ls='-', color='b', label='Reference')
-    plt.title('Mean Square Errors')
+    
+    # MC data
+    plt.loglog(nb_samples, MSE, ls='None', marker='o', color='g', label=name)
+    # 1 degree polynomial reference
+    plt.loglog(nb_samples, np.power(nb_samples, -1.0), ls='-', color='b', label='ref')
+    # 1 degree polynomial fit
+    log_nb_samples = np.log2(nb_samples)
+    log_MSE = np.log2(MSE)
+    fitted_coefficients = np.polyfit(log_nb_samples, log_MSE, 1)
+    fitted_polygon = np.poly1d(fitted_coefficients)
+    fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
+    plt.loglog(nb_samples, fitted_data, ls='-', color='g', label='fit')
+    
+    plt.title('Mean Square Errors [rico={0:0.2f}]'.format(fitted_coefficients[0]))
     plt.xlabel('# samples')
     plt.ylabel('MSE')
+    plt.legend()
     
 def vis_RMSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    _vis_RMSE(RMSE=calculate_RMSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_samples=nb_samples)
+    _vis_RMSE(f.__name__, RMSE=calculate_RMSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_samples=nb_samples)
     
-def _vis_RMSE(RMSE, nb_samples=DEFAULT_NB_SAMPLES):
+def _vis_RMSE(name, RMSE, nb_samples=DEFAULT_NB_SAMPLES):
     plt.figure()
-    plt.loglog(nb_samples, RMSE, ls='-', marker='.', color='g', label='f')
-    plt.loglog(nb_samples, np.power(nb_samples, -0.5), ls='-', color='b', label='Reference')
-    plt.title('Root Mean Square Errors')
+    
+    # MC data
+    plt.loglog(nb_samples, RMSE, ls='None', marker='o', color='g', label=name)
+    # 1 degree polynomial reference
+    plt.loglog(nb_samples, np.power(nb_samples, -0.5), ls='-', color='b', label='ref')
+    # 1 degree polynomial fit
+    log_nb_samples = np.log2(nb_samples)
+    log_RMSE = np.log2(RMSE)
+    fitted_coefficients = np.polyfit(log_nb_samples, log_RMSE, 1)
+    fitted_polygon = np.poly1d(fitted_coefficients)
+    fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
+    plt.loglog(nb_samples, fitted_data, ls='-', color='g', label='fit')
+    
+    plt.title('Root Mean Square Errors [rico={0:0.2f}]'.format(fitted_coefficients[0]))
     plt.xlabel('# samples')
     plt.ylabel('RMSE')
+    plt.legend()
