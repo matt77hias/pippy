@@ -16,7 +16,7 @@ def test(exp=10):
     nb_samples=[2**i for i in range(1, exp+1)]
     p_vs, mean, window = test_polygon1()
     
-    def f_wc(s):   return surface_area_hitmiss(f=pip_cn,   p_vs=p_vs, r=window, samples=s, plot=False)
+    def f_cn(s):   return surface_area_hitmiss(f=pip_cn,   p_vs=p_vs, r=window, samples=s, plot=False)
     def f_wn(s):   return surface_area_hitmiss(f=pip_wn,   p_vs=p_vs, r=window, samples=s, plot=False)
     def f_path(s): return surface_area_hitmiss(f=pip_path, p_vs=p_vs, r=window, samples=s, plot=False)
     
