@@ -41,8 +41,18 @@ def calculate_RMSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_
 ###################################################################################################################################################################################
 ## Visualization of Characteristic Values
 ###################################################################################################################################################################################
+from global_configuration import nb_cpus
+from multiprocessing.pool import ThreadPool
+
+def _task(f, nb_experiments=DEFAULT_NB_EXPERIMENTS):
+    pool = ThreadPool(processes=nb_cpus())
+    result = np.array(pool.map(f, range(nb_experiments)))
+    pool.close()
+    pool.join() 
+    return result
+
 def vis_bias(f, mean, nb_experiments=DEFAULT_NB_EXPERIMENTS, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    bias = np.array([calculate_bias(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples) for e in range(nb_experiments)])
+    bias = _task(lambda x: calculate_bias(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_experiments=nb_experiments)
     _vis_bias(f.__name__, bias=bias, nb_samples=nb_samples)
 
 def _vis_bias(name, bias, nb_samples=DEFAULT_NB_SAMPLES):
@@ -56,10 +66,12 @@ def _vis_bias(name, bias, nb_samples=DEFAULT_NB_SAMPLES):
     plt.xscale('log')
     plt.xlabel('# samples')
     plt.ylabel('# bias')
-    plt.legend()
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    
+    plt.savefig('bias_' + name + '.png', bbox_inches='tight')
 
 def vis_MSE(f, mean=None, nb_experiments=DEFAULT_NB_EXPERIMENTS, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    MSE = np.array([calculate_MSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples) for e in range(nb_experiments)])
+    MSE = _task(lambda x: calculate_MSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_experiments=nb_experiments)
     _vis_MSE(f.__name__, MSE=MSE, nb_samples=nb_samples)
 
 def _vis_MSE(name, MSE, nb_samples=DEFAULT_NB_SAMPLES):
@@ -79,15 +91,17 @@ def _vis_MSE(name, MSE, nb_samples=DEFAULT_NB_SAMPLES):
     fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
     plt.plot(nb_samples, fitted_data, ls='-', color='g', label='fit')
     
-    plt.title('Mean Square Errors [rico={0:0.2f}]'.format(fitted_coefficients[0]))
+    plt.title('Mean Square Errors [rico={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('# samples')
     plt.ylabel('MSE')
-    plt.legend()
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    
+    plt.savefig('MSE_' + name + '.png', bbox_inches='tight')
     
 def vis_RMSE(f, mean=None, nb_experiments=DEFAULT_NB_EXPERIMENTS, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    RMSE = np.array([calculate_RMSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples) for e in range(nb_experiments)])
+    RMSE = _task(lambda x: calculate_RMSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_experiments=nb_experiments)
     _vis_RMSE(f.__name__, RMSE=RMSE, nb_samples=nb_samples)
     
 def _vis_RMSE(name, RMSE, nb_samples=DEFAULT_NB_SAMPLES):
@@ -107,9 +121,11 @@ def _vis_RMSE(name, RMSE, nb_samples=DEFAULT_NB_SAMPLES):
     fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
     plt.plot(nb_samples, fitted_data, ls='-', color='g', label='fit')
     
-    plt.title('Root Mean Square Errors [rico={0:0.2f}]'.format(fitted_coefficients[0]))
+    plt.title('Root Mean Square Errors [rico={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('# samples')
     plt.ylabel('RMSE')
-    plt.legend()
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    
+    plt.savefig('RMSE_' + name + '.png', bbox_inches='tight')

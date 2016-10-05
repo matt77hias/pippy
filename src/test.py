@@ -12,7 +12,8 @@ def test_polygon1():
     return p_vs, mean, window
 
 from mc_tools import vis_bias, vis_MSE, vis_RMSE
-def test(nb_samples=[2**i for i in range(1, 6)]):
+def test(exp=7):
+    nb_samples=[2**i for i in range(1, exp+1)]
     p_vs, mean, window = test_polygon1()
     
     def f_wc(s):   return surface_area_hitmiss(f=pip_cn,   p_vs=p_vs, r=window, samples=s, plot=False)
