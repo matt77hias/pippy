@@ -1,4 +1,5 @@
 from geometry import surface_area_hitmiss, surface_area_exact, pip_cn, pip_wn, pip_path
+from mc_tools import vis_bias, vis_MSE, vis_RMSE
 import numpy as np
 
 ###################################################################################################################################################################################
@@ -11,7 +12,6 @@ def test_polygon1():
     window = [0.0, 350.0, 0.0, 350.0]
     return p_vs, mean, window
 
-from mc_tools import vis_bias, vis_MSE, vis_RMSE
 def test(exp=10):
     nb_samples=[2**i for i in range(1, exp+1)]
     p_vs, mean, window = test_polygon1()
