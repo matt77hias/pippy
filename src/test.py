@@ -20,7 +20,7 @@ def test(exp=10):
     def f_wn(s):   return surface_area_hitmiss(f=pip_wn,   p_vs=p_vs, r=window, samples=s, plot=False)
     def f_path(s): return surface_area_hitmiss(f=pip_path, p_vs=p_vs, r=window, samples=s, plot=False)
     
-    for f in [f_wc, f_wn, f_path]: 
+    for f in [f_wn, f_wn, f_path]: 
         vis_MSE(f=f, mean=mean, nb_samples=nb_samples)
         vis_RMSE(f=f, mean=mean, nb_samples=nb_samples)
         
