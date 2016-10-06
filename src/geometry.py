@@ -27,7 +27,7 @@ def pip_cn(p, p_vs):
 	       cn += 1
 	p_v1 = p_v2
     # even = out, odd = in
-    return cn & 1
+    return bool(cn & 1)
 	
 # (c) Sunday [http://geomalgorithms.com/a03-_inclusion.html]
 def pip_wn(p, p_vs):
@@ -49,7 +49,7 @@ def pip_wn(p, p_vs):
             if (p[1] >= p_v2[1]) and (is_left(p_v1, p_v2) < 0):
 		wn -= 1
 	p_v1 = p_v2	
-    return wn != 0	
+    return bool(wn)
    
 from matplotlib.path import Path 
 def pip_path(p, p_vs):

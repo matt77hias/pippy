@@ -1,66 +1,148 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-DEFAULT_NB_EXPERIMENTS = 10
-DEFAULT_NB_RUNS = 1000
-DEFAULT_NB_SAMPLES = [2**i for i in range(1, 16)]
-
 ###################################################################################################################################################################################
-## Characteristic Values
+## Configuration
 ################################################################################################################################################################################### 
-def calculate_bias(f, mean, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    size = len(nb_samples)
-    bias = np.zeros((size))
-    for i in range(size):
-        samples = np.array([f(nb_samples[i]) for run in range(nb_runs)])
-        bias[i] = np.mean(samples) - mean
-    return bias / mean #relative bias
-
-def calculate_MSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    size = len(nb_samples)
+class Configuration(object):
+    
+    def __init__(self, nb_merges=100, nb_experiments=10, nb_runs=1000, nb_samples=[2**i for i in range(1, 16)]):
+        # Number of merges for bootstrapping
+        self.nb_merges = nb_merges
+        # Number of experiments to obtain one _beta_ estimator
+        # _beta_ distribution available
+        self.nb_experiments = nb_experiments
+        # Number of runs to obtain one estimator _beta_ of the MSE/RMSE of one estimator _alpha_
+        # _alpha_ distribution available
+        self.nb_runs = nb_runs
+        # Number of samples to obtain one estimator _alpha_
+        self.nb_samples = nb_samples
+        
+###################################################################################################################################################################################
+## Sequential calculation of characteristic values
+################################################################################################################################################################################### 
+def calculate_all(f, mean=None, config=Configuration()):
+    size = len(config.nb_samples)
+    if mean is not None:
+        bias = np.zeros((size))
     MSE = np.zeros((size))
     for i in range(size):
-        samples = np.array([f(nb_samples[i]) for run in range(nb_runs)])
+        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
         if mean is None:
-            MSE[i] = np.var(np.abs(samples - np.mean(samples)), ddof=1)
+            MSE[i] = np.var(samples - np.mean(samples), ddof=1)
         else:
-            MSE[i] = np.var(np.abs(samples - mean), ddof=0)
+            MSE[i] = np.var(samples - mean, ddof=0)
+            bias[i] = (np.mean(samples) - mean) / mean #relative bias
+    if mean is not None:
+        return np.sqrt(MSE), MSE, bias
+    else:
+        return np.sqrt(MSE), MSE
+
+def calculate_bias(f, mean, config=Configuration()):
+    size = len(config.nb_samples)
+    bias = np.zeros((size))
+    for i in range(size):
+        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
+        bias[i] = (np.mean(samples) - mean) / mean #relative bias
+    return bias
+
+def calculate_MSE(f, mean=None, config=Configuration()):
+    size = len(config.nb_samples)
+    MSE = np.zeros((size))
+    for i in range(size):
+        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
+        if mean is None:
+            MSE[i] = np.var(samples - np.mean(samples), ddof=1)
+        else:
+            MSE[i] = np.var(samples - mean, ddof=0)
     return MSE
 
-def calculate_RMSE(f, mean=None, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    size = len(nb_samples)
+def calculate_RMSE(f, mean=None, config=Configuration()):
+    size = len(config.nb_samples)
     RMSE = np.zeros((size))
     for i in range(size):
-        samples = np.array([f(nb_samples[i]) for run in range(nb_runs)])
+        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
         if mean is None:
-            RMSE[i] = np.std(np.abs(samples - np.mean(samples)), ddof=1)
+            RMSE[i] = np.std(samples - np.mean(samples), ddof=1)
         else:
-            RMSE[i] = np.std(np.abs(samples - mean), ddof=0)
+            RMSE[i] = np.std(samples - mean, ddof=0)
     return RMSE
-    
+   
 ###################################################################################################################################################################################
-## Visualization of Characteristic Values
-###################################################################################################################################################################################
+## Parallel calculation of characteristic values
+###################################################################################################################################################################################  
 from global_configuration import nb_cpus
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import ThreadPool as Pool
 
-def _task(f, nb_experiments=DEFAULT_NB_EXPERIMENTS):
-    pool = ThreadPool(processes=nb_cpus())
-    result = np.array(pool.map(f, range(nb_experiments)))
+def calculate(f, config=Configuration()):
+    pool = Pool(nb_cpus())
+    result = np.array(pool.map(f, range(config.nb_experiments)))
     pool.close()
     pool.join() 
     return result
+    
+###################################################################################################################################################################################
+## Bootstrap sampling
+################################################################################################################################################################################### 
+def bootstrap_coefficients(data, config=Configuration()):
+    # nb_experiments x len(nb_samples) -> len(nb_samples) x nb_experiments
+    tdata = np.transpose(data)
 
-def vis_bias(f, mean, nb_experiments=DEFAULT_NB_EXPERIMENTS, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    bias = _task(lambda x: calculate_bias(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_experiments=nb_experiments)
-    _vis_bias(f.__name__, bias=bias, nb_samples=nb_samples)
+    w = 1.0 / np.std( data, axis=0, ddof=1)
 
-def _vis_bias(name, bias, nb_samples=DEFAULT_NB_SAMPLES):
+    log_nb_samples = np.log2(config.nb_samples)
+    coefficients = np.zeros((config.nb_merges, 2))
+    for i in range(config.nb_merges):
+        values = tdata[[\
+                        np.arange(len(config.nb_samples)), \
+                        np.random.randint(size=(len(config.nb_samples)), low=0, high=config.nb_experiments)]]
+        log_values = np.log2(values)
+        coefficients[i] = np.polyfit(log_nb_samples, log_values, 1, w=w)
+    
+    # coefficients std
+    return np.std(coefficients, axis=0, ddof=1)
+ 
+###################################################################################################################################################################################
+## Visualization of characteristic values
+###################################################################################################################################################################################
+def vis_bias(f, mean, config=Configuration()):
+    # nb_experiments x len(nb_samples)
+    biass = calculate(f=lambda x: calculate_bias(f=f, mean=mean, config=config), config=config)
+    
+    # Visualization
+    _vis_bias(name=f.__name__, biass=biass, config=config)
+
+def vis_MSE(f, mean=None, config=Configuration()):
+    # nb_experiments x len(nb_samples)
+    MSEs = calculate(f=lambda x: calculate_MSE(f=f, mean=mean, config=config), config=config)
+    
+    # Bootstrapping coefficients
+    coefficients_std = bootstrap_coefficients(MSEs, config=config)
+    print('MSE slope std:\t\t' + str(coefficients_std[0]))
+    print('MSE intercept std:\t' + str(coefficients_std[1]))
+    
+    # Visualization
+    _vis_MSE(name=f.__name__, MSEs=MSEs, config=config)
+
+def vis_RMSE(f, mean=None, config=Configuration()):
+    # nb_experiments x len(nb_samples)
+    RMSEs = calculate(f=lambda x: calculate_RMSE(f=f, mean=mean, config=config), config=config)
+    
+    # Bootstrapping coefficients
+    coefficients_std = bootstrap_coefficients(RMSEs, config=config)
+    print('RMSE slope std:\t\t' + str(coefficients_std[0]))
+    print('RMSE intercept std:\t' + str(coefficients_std[1]))
+    
+    # Visualization
+    _vis_RMSE(name=f.__name__, RMSEs=RMSEs, config=config)
+
+def _vis_bias(name, biass, config=Configuration()):
     plt.figure()
     
-    bias_mean = np.mean(bias, axis=0)
-    bias_std = np.std(bias, axis=0, ddof=1)
-    plt.errorbar(nb_samples, bias_mean, yerr=bias_std, ls='None', marker='o', color='g', label=name)
+    # MC data
+    biass_mean = np.mean(biass, axis=0)
+    biass_std  = np.std( biass, axis=0, ddof=1)
+    plt.errorbar(config.nb_samples, biass_mean, yerr=biass_std, ls='None', marker='o', color='g', label=name)
     
     plt.title('Bias')
     plt.xscale('log')
@@ -70,28 +152,25 @@ def _vis_bias(name, bias, nb_samples=DEFAULT_NB_SAMPLES):
     
     plt.savefig('bias_' + name + '.png', bbox_inches='tight')
 
-def vis_MSE(f, mean=None, nb_experiments=DEFAULT_NB_EXPERIMENTS, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    MSE = _task(lambda x: calculate_MSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_experiments=nb_experiments)
-    _vis_MSE(f.__name__, MSE=MSE, nb_samples=nb_samples)
-
-def _vis_MSE(name, MSE, nb_samples=DEFAULT_NB_SAMPLES):
+def _vis_MSE(name, MSEs, config=Configuration()):
     plt.figure()
     
     # MC data
-    MSE_mean = np.mean(MSE, axis=0)
-    MSE_std = np.std(MSE, axis=0, ddof=1)
-    plt.errorbar(nb_samples, MSE_mean, yerr=MSE_std, ls='None', marker='o', color='g', label=name)
+    MSEs_mean = np.mean(MSEs, axis=0)
+    MSEs_std  = np.std( MSEs, axis=0, ddof=1)
+    plt.errorbar(config.nb_samples, MSEs_mean, yerr=MSEs_std, ls='None', marker='o', color='g', label=name)
     # 1 degree polynomial reference
-    plt.plot(nb_samples, np.power(nb_samples, -1.0), ls='-', color='b', label='ref')
+    plt.plot(config.nb_samples, np.power(config.nb_samples, -1.5), ls='-', color='b', label='ref')
     # 1 degree polynomial fit
-    log_nb_samples = np.log2(nb_samples)
-    log_MSE_mean = np.log2(MSE_mean)
-    fitted_coefficients = np.polyfit(log_nb_samples, log_MSE_mean, 1)
+    w = 1.0 / MSEs_std
+    log_nb_samples = np.log2(config.nb_samples)
+    log_MSEs_mean = np.log2(MSEs_mean)
+    fitted_coefficients = np.polyfit(log_nb_samples, log_MSEs_mean, 1, w=w)
     fitted_polygon = np.poly1d(fitted_coefficients)
     fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
-    plt.plot(nb_samples, fitted_data, ls='-', color='g', label='fit')
+    plt.plot(config.nb_samples, fitted_data, ls='-', color='g', label='fit')
     
-    plt.title('Mean Square Errors [rico={0:0.4f}]'.format(fitted_coefficients[0]))
+    plt.title('Mean Square Errors [slope={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('# samples')
@@ -99,29 +178,26 @@ def _vis_MSE(name, MSE, nb_samples=DEFAULT_NB_SAMPLES):
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     
     plt.savefig('MSE_' + name + '.png', bbox_inches='tight')
-    
-def vis_RMSE(f, mean=None, nb_experiments=DEFAULT_NB_EXPERIMENTS, nb_runs=DEFAULT_NB_RUNS, nb_samples=DEFAULT_NB_SAMPLES):
-    RMSE = _task(lambda x: calculate_RMSE(f=f, mean=mean, nb_runs=nb_runs, nb_samples=nb_samples), nb_experiments=nb_experiments)
-    _vis_RMSE(f.__name__, RMSE=RMSE, nb_samples=nb_samples)
-    
-def _vis_RMSE(name, RMSE, nb_samples=DEFAULT_NB_SAMPLES):
+  
+def _vis_RMSE(name, RMSEs, config=Configuration()):
     plt.figure()
     
     # MC data
-    RMSE_mean = np.mean(RMSE, axis=0)
-    RMSE_std = np.std(RMSE, axis=0, ddof=1)
-    plt.errorbar(nb_samples, RMSE_mean, yerr=RMSE_std, ls='None', marker='o', color='g', label=name)
+    RMSEs_mean = np.mean(RMSEs, axis=0)
+    RMSEs_std  = np.std( RMSEs, axis=0, ddof=1)
+    plt.errorbar(config.nb_samples, RMSEs_mean, yerr=RMSEs_std, ls='None', marker='o', color='g', label=name)
     # 1 degree polynomial reference
-    plt.plot(nb_samples, np.power(nb_samples, -0.5), ls='-', color='b', label='ref')
+    plt.plot(config.nb_samples, np.power(config.nb_samples, -0.5), ls='-', color='b', label='ref')
     # 1 degree polynomial fit
-    log_nb_samples = np.log2(nb_samples)
-    log_RMSE_mean = np.log2(RMSE_mean)
-    fitted_coefficients = np.polyfit(log_nb_samples, log_RMSE_mean, 1)
+    w = 1.0 / RMSEs_std
+    log_nb_samples = np.log2(config.nb_samples)
+    log_RMSEs_mean = np.log2(RMSEs_mean)
+    fitted_coefficients = np.polyfit(log_nb_samples, log_RMSEs_mean, 1, w=w)
     fitted_polygon = np.poly1d(fitted_coefficients)
     fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
-    plt.plot(nb_samples, fitted_data, ls='-', color='g', label='fit')
+    plt.plot(config.nb_samples, fitted_data, ls='-', color='g', label='fit')
     
-    plt.title('Root Mean Square Errors [rico={0:0.4f}]'.format(fitted_coefficients[0]))
+    plt.title('Root Mean Square Errors [slope={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('# samples')
