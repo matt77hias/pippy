@@ -21,23 +21,6 @@ class Configuration(object):
 ###################################################################################################################################################################################
 ## Sequential calculation of characteristic values
 ################################################################################################################################################################################### 
-def calculate_all(f, mean=None, config=Configuration()):
-    size = len(config.nb_samples)
-    if mean is not None:
-        bias = np.zeros((size))
-    MSE = np.zeros((size))
-    for i in range(size):
-        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
-        if mean is None:
-            MSE[i] = np.var(samples - np.mean(samples), ddof=1)
-        else:
-            MSE[i] = np.var(samples - mean, ddof=0)
-            bias[i] = (np.mean(samples) - mean) / mean #relative bias
-    if mean is not None:
-        return np.sqrt(MSE), MSE, bias
-    else:
-        return np.sqrt(MSE), MSE
-
 def calculate_bias(f, mean, config=Configuration()):
     size = len(config.nb_samples)
     bias = np.zeros((size))
@@ -46,26 +29,20 @@ def calculate_bias(f, mean, config=Configuration()):
         bias[i] = (np.mean(samples) - mean) / mean #relative bias
     return bias
 
-def calculate_MSE(f, mean=None, config=Configuration()):
+def calculate_MSE(f, config=Configuration()):
     size = len(config.nb_samples)
     MSE = np.zeros((size))
     for i in range(size):
         samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
-        if mean is None:
-            MSE[i] = np.var(samples - np.mean(samples), ddof=1)
-        else:
-            MSE[i] = np.var(samples - mean, ddof=0)
+        MSE[i] = np.var(samples, ddof=1)
     return MSE
 
-def calculate_RMSE(f, mean=None, config=Configuration()):
+def calculate_RMSE(f, config=Configuration()):
     size = len(config.nb_samples)
     RMSE = np.zeros((size))
     for i in range(size):
         samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
-        if mean is None:
-            RMSE[i] = np.std(samples - np.mean(samples), ddof=1)
-        else:
-            RMSE[i] = np.std(samples - mean, ddof=0)
+        RMSE[i] = np.std(samples, ddof=1)
     return RMSE
    
 ###################################################################################################################################################################################
@@ -99,7 +76,7 @@ def bootstrap_coefficients(data, config=Configuration()):
         log_values = np.log2(values)
         coefficients[i] = np.polyfit(log_nb_samples, log_values, 1, w=w)
     
-    # coefficients std
+    # coefficients 
     return np.std(coefficients, axis=0, ddof=1)
  
 ###################################################################################################################################################################################
@@ -112,9 +89,9 @@ def vis_bias(f, mean, config=Configuration()):
     # Visualization
     _vis_bias(name=f.__name__, biass=biass, config=config)
 
-def vis_MSE(f, mean=None, config=Configuration()):
+def vis_MSE(f, config=Configuration()):
     # nb_experiments x len(nb_samples)
-    MSEs = calculate(f=lambda x: calculate_MSE(f=f, mean=mean, config=config), config=config)
+    MSEs = calculate(f=lambda x: calculate_MSE(f=f, config=config), config=config)
     
     # Bootstrapping coefficients
     coefficients_std = bootstrap_coefficients(MSEs, config=config)
@@ -124,9 +101,9 @@ def vis_MSE(f, mean=None, config=Configuration()):
     # Visualization
     _vis_MSE(name=f.__name__, MSEs=MSEs, config=config)
 
-def vis_RMSE(f, mean=None, config=Configuration()):
+def vis_RMSE(f, config=Configuration()):
     # nb_experiments x len(nb_samples)
-    RMSEs = calculate(f=lambda x: calculate_RMSE(f=f, mean=mean, config=config), config=config)
+    RMSEs = calculate(f=lambda x: calculate_RMSE(f=f, config=config), config=config)
     
     # Bootstrapping coefficients
     coefficients_std = bootstrap_coefficients(RMSEs, config=config)

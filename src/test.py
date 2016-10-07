@@ -30,8 +30,8 @@ def test(exp=10):
     def f_path(s): return surface_area_hitmiss(f=pip_path, p_vs=p_vs, r=window, samples=s, plot=False)
     
     for f in [f_cn, f_wn, f_path]:
-        vis_MSE( f=f, mean=mean, config=config)
-        vis_RMSE(f=f, mean=mean, config=config)
+        vis_MSE( f=f, config=config)
+        vis_RMSE(f=f, config=config)
         
 def test_border():
     p_vs, mean, window = test_polygon2()
