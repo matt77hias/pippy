@@ -6,7 +6,7 @@ import numpy as np
 ################################################################################################################################################################################### 
 class Configuration(object):
     
-    def __init__(self, nb_merges=100, nb_experiments=10, nb_runs=1000, nb_samples=[2**i for i in range(1, 16)]):
+    def __init__(self, nb_merges=128, nb_experiments=16, nb_runs=1024, nb_samples=[2**i for i in range(1, 16)]):
         # Number of merges for bootstrapping
         self.nb_merges = nb_merges
         # Number of experiments to obtain one _beta_ estimator
@@ -21,14 +21,6 @@ class Configuration(object):
 ###################################################################################################################################################################################
 ## Sequential calculation of characteristic values
 ################################################################################################################################################################################### 
-def calculate_bias(f, mean, config=Configuration()):
-    size = len(config.nb_samples)
-    bias = np.zeros((size))
-    for i in range(size):
-        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
-        bias[i] = (np.mean(samples) - mean) / mean #relative bias
-    return bias
-
 def calculate_MSE(f, config=Configuration()):
     size = len(config.nb_samples)
     MSE = np.zeros((size))
@@ -82,12 +74,22 @@ def bootstrap_coefficients(data, config=Configuration()):
 ###################################################################################################################################################################################
 ## Visualization of characteristic values
 ###################################################################################################################################################################################
-def vis_bias(f, mean, config=Configuration()):
+def vis_MSE_and_RMSE(f, config=Configuration()):
     # nb_experiments x len(nb_samples)
-    biass = calculate(f=lambda x: calculate_bias(f=f, mean=mean, config=config), config=config)
+    RMSEs = calculate(f=lambda x: calculate_RMSE(f=f, config=config), config=config)
+    MSEs = RMSEs**2
+    
+    # Bootstrapping coefficients
+    coefficients_RMSE_std = bootstrap_coefficients(RMSEs, config=config)
+    print('RMSE slope std:\t\t' + str(coefficients_RMSE_std[0]))
+    print('RMSE intercept std:\t' + str(coefficients_RMSE_std[1]))
+    coefficients_MSE_std = bootstrap_coefficients(MSEs, config=config)
+    print('MSE slope std:\t\t' + str(coefficients_MSE_std[0]))
+    print('MSE intercept std:\t' + str(coefficients_MSE_std[1]))
     
     # Visualization
-    _vis_bias(name=f.__name__, biass=biass, config=config)
+    _vis_RMSE(name=f.__name__, RMSEs=RMSEs, config=config)
+    _vis_MSE(name=f.__name__,  MSEs=RMSEs**2, config=config)
 
 def vis_MSE(f, config=Configuration()):
     # nb_experiments x len(nb_samples)
@@ -113,23 +115,7 @@ def vis_RMSE(f, config=Configuration()):
     # Visualization
     _vis_RMSE(name=f.__name__, RMSEs=RMSEs, config=config)
 
-def _vis_bias(name, biass, config=Configuration()):
-    plt.figure()
-    
-    # MC data
-    biass_mean = np.mean(biass, axis=0)
-    biass_std  = np.std( biass, axis=0, ddof=1)
-    plt.errorbar(config.nb_samples, biass_mean, yerr=biass_std, ls='None', marker='o', color='g', label=name)
-    
-    plt.title('Bias')
-    plt.xscale('log')
-    plt.xlabel('# samples')
-    plt.ylabel('# bias')
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    
-    plt.savefig('bias_' + name + '.png', bbox_inches='tight')
-
-def _vis_MSE(name, MSEs, config=Configuration()):
+def _vis_MSE(name, MSEs, config=Configuration(), plot=True, save=True):
     plt.figure()
     
     # MC data
@@ -154,9 +140,12 @@ def _vis_MSE(name, MSEs, config=Configuration()):
     plt.ylabel('MSE')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     
-    plt.savefig('MSE_' + name + '.png', bbox_inches='tight')
+    if save:
+        plt.savefig('MSE_' + name + '.png', bbox_inches='tight')
+    if not plot:
+        plt.close()
   
-def _vis_RMSE(name, RMSEs, config=Configuration()):
+def _vis_RMSE(name, RMSEs, config=Configuration(), plot=True, save=True):
     plt.figure()
     
     # MC data
@@ -181,4 +170,7 @@ def _vis_RMSE(name, RMSEs, config=Configuration()):
     plt.ylabel('RMSE')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     
-    plt.savefig('RMSE_' + name + '.png', bbox_inches='tight')
+    if save:
+        plt.savefig('RMSE_' + name + '.png', bbox_inches='tight')
+    if not plot:
+        plt.close()

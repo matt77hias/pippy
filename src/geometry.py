@@ -58,18 +58,21 @@ def pip_path(p, p_vs):
 ###################################################################################################################################################################################
 ## Surface Area
 ###################################################################################################################################################################################     
-def surface_area_hitmiss(f, p_vs, r, samples=1000, plot=True, plotter=None):
+def surface_area_hitmiss(f, p_vs, r=None, samples=1000, rng=np.random, plot=True, plotter=None):
+    if r is None:
+        r = reduce(lambda acc, v: [min(acc[0], v[0]), max(acc[1], v[0]), min(acc[2], v[1]), max(acc[3], v[1])], p_vs, [np.inf, -np.inf, np.inf, -np.inf])
+    window_x = (r[1] - r[0])
+    window_y = (r[3] - r[2])
+    
     if plot and plotter is None:
         plotter = Plotter2D()
     if plot:
         plotter.plot_AABB([r[0], r[2]], [r[1], r[3]], color='k')
         plotter.plot_contour(p_vs, color='b')
     
-    window_x = (r[1] - r[0])
-    window_y = (r[3] - r[2])
     p_in = 0
     for s in range(samples):
-        p = np.random.random((2))
+        p = rng.random((2))
         p[0] = p[0] * window_x + r[0]
         p[1] = p[1] * window_y + r[2]
         if f(p, p_vs):
