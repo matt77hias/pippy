@@ -9,13 +9,13 @@ A small *point-inside-polygon* (pip) library supporting *crossing* and *winding 
 
 ### Monte-Carlo (*hit-or-miss*) convergence behaviour
 #### Crossing number pip test
-<p align="center"><img src="https://github.com/matt77hias/pippy/blob/master/res/RMSE_f_cn.png"></p>
+<p align="center"><img src="https://github.com/matt77hias/pippy/blob/master/res/RMSE_f_cn.png" width="500"></p>
 
 #### Winding number pip test
-<p align="center"><img src="https://github.com/matt77hias/pippy/blob/master/res/RMSE_f_wn.png"></p>
+<p align="center"><img src="https://github.com/matt77hias/pippy/blob/master/res/RMSE_f_wn.png" width="500"></p>
 
 #### `matplotlib.path.Path.contains_point` pip test
-<p align="center"><img src="https://github.com/matt77hias/pippy/blob/master/res/RMSE_f_path.png"></p>
+<p align="center"><img src="https://github.com/matt77hias/pippy/blob/master/res/RMSE_f_path.png" width="500"></p>
 
 ```python
 # Code
