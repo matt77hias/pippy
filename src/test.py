@@ -1,4 +1,4 @@
-from geometry import surface_area_hitmiss, pip_cn, pip_wn, pip_path
+from geometry import surface_area_exact, surface_area_hitmiss, pip_cn, pip_wn, pip_path
 from mc_tools import Configuration, vis_RMSE
 import numpy as np
 
@@ -13,8 +13,9 @@ def test_polygon2():
     p_vs = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
     return [np.array(v) for v in p_vs]
     
-def test(exp=10):
+def test(exp=12):
     p_vs = test_polygon1()
+    exact = surface_area_exact(p_vs)
     
     config = Configuration()
     config.nb_samples = [2**i for i in range(1, exp+1)]
@@ -24,10 +25,10 @@ def test(exp=10):
     def f_path(s): return surface_area_hitmiss(f=pip_path, p_vs=p_vs, samples=s, plot=False)
     
     for f in [f_cn, f_wn, f_path]:
-        vis_RMSE(f=f, config=config)
+        vis_RMSE(f=f, config=config, exact=exact)
         
 def test_border():
-    p_vs, mean = test_polygon2()
+    p_vs = test_polygon2()
     
     vertices = [np.array([0.0, 0.0]), np.array([1.0, 0.0]), np.array([1.0, 1.0]), np.array([0.0, 1.0])]
     edges    = [np.array([0.0, 0.5]), np.array([1.0, 0.5]), np.array([0.5, 0.0]), np.array([1.0, 0.5])]

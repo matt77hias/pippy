@@ -57,7 +57,7 @@ def bootstrapping(data, config=Configuration()):
 ###################################################################################################################################################################################
 ## Visualization
 ###################################################################################################################################################################################
-def vis_RMSE(f, config=Configuration(), plot=True, save=True):
+def vis_RMSE(f, config=Configuration(), exact=None, plot=True, save=True):
     # nb_experiments x len(nb_samples)
     data = calculate_experiments(f=f, config=config)
     # Select 1 RMSE
@@ -67,10 +67,14 @@ def vis_RMSE(f, config=Configuration(), plot=True, save=True):
     print('slope RMSE:\t' + str(coefficient_RMSE[0]))
     print('intercept RMSE:\t' + str(coefficient_RMSE[1]))
     # Visualization
-    _vis_RMSE(name=f.__name__, xs=config.nb_samples, ys=RMSE, yerr=RMSE_RMSE, plot=plot, save=save)
+    _vis_RMSE(name=f.__name__, xs=config.nb_samples, ys=RMSE, yerr=RMSE_RMSE, exact=exact, plot=plot, save=save)
 
-def _vis_RMSE(name, xs, ys, yerr, plot=True, save=True, ref_offset=0.99):
+def _vis_RMSE(name, xs, ys, yerr, exact=None, plot=True, save=True, ref_offset=1.5):
     plt.figure()
+    
+    if exact is not None:
+        ys /= abs(exact)
+        yerr /= abs(exact)
     
     # RMSE errorbar
     plt.errorbar(xs, ys, yerr=yerr, ls='None', marker='o', color='g', label=name)
