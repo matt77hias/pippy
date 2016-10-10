@@ -73,7 +73,7 @@ def _vis_RMSE(name, xs, ys, yerr, plot=True, save=True, ref_offset=0.99):
     plt.figure()
     
     # RMSE errorbar
-    plt.errorbar(xs, ys, yerr=yerr / ys, ls='None', marker='o', color='g', label=name)
+    plt.errorbar(xs, ys, yerr=yerr, ls='None', marker='o', color='g', label=name)
     # 1 degree polynomial fit
     log_xs = np.log2(xs)
     log_ys = np.log2(ys)
