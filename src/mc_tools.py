@@ -15,7 +15,7 @@ class Configuration(object):
         self.nb_samples = nb_samples
         
 ###################################################################################################################################################################################
-## Parallel calculation
+## Calculation
 ###################################################################################################################################################################################  
 from global_configuration import nb_cpus
 from multiprocessing.pool import ThreadPool as Pool
@@ -51,41 +51,41 @@ def bootstrapping(data, config=Configuration()):
         # uniform weights due to loglog scale 
         coefficients[m,:] = np.polyfit(log_nb_samples, log_RMSE, 1)
     
-    # std of RMSEs and coefficients 
+    # RMSE of RMSEs and coefficients 
     return np.std(RMSEs, axis=0, ddof=1), np.std(coefficients, axis=0, ddof=1)
  
 ###################################################################################################################################################################################
-## Visualization of characteristic values
+## Visualization
 ###################################################################################################################################################################################
 def vis_RMSE(f, config=Configuration(), plot=True, save=True):
     # nb_experiments x len(nb_samples)
     data = calculate_experiments(f=f, config=config)
-    
     # Select 1 RMSE
     RMSE = np.std(data, axis=0, ddof=1)
-    
     # Bootstrapping coefficients
-    RMSE_stds, coefficient_stds = bootstrapping(data, config=config)
-    print('slope RMSE:\t' + str(coefficient_stds[0]))
-    print('intercept RMSE:\t' + str(coefficient_stds[1]))
-    
+    RMSE_RMSE, coefficient_RMSE = bootstrapping(data, config=config)
+    print('slope RMSE:\t' + str(coefficient_RMSE[0]))
+    print('intercept RMSE:\t' + str(coefficient_RMSE[1]))
     # Visualization
-    _vis_RMSE(name=f.__name__, xs=config.nb_samples, ys=RMSE, yerr=RMSE_stds, plot=plot, save=save)
+    _vis_RMSE(name=f.__name__, xs=config.nb_samples, ys=RMSE, yerr=RMSE_RMSE, plot=plot, save=save)
 
-def _vis_RMSE(name, xs, ys, yerr, plot=True, save=True):
+def _vis_RMSE(name, xs, ys, yerr, plot=True, save=True, ref_offset=0.99):
     plt.figure()
     
-    # MC data
+    # RMSE errorbar
     plt.errorbar(xs, ys, yerr=yerr, ls='None', marker='o', color='g', label=name)
-    # 1 degree polynomial reference
-    plt.plot(xs, np.power(xs, -0.5), ls='-', color='b', label='ref')
     # 1 degree polynomial fit
     log_xs = np.log2(xs)
     log_ys = np.log2(ys)
     fitted_coefficients = np.polyfit(log_xs, log_ys, 1)
     fitted_polygon = np.poly1d(fitted_coefficients)
-    fitted_data = [2**fitted_polygon(s) for s in log_xs]
-    plt.plot(xs, fitted_data, ls='-', color='g', label='fit')
+    fitted_ys = [2**fitted_polygon(s) for s in log_xs]
+    plt.plot(xs, fitted_ys, ls='-', color='g', label='fit')
+    # 1 degree polynomial reference
+    ref_coefficients = [-0.5, ref_offset * fitted_coefficients[1]]
+    ref_polygon = np.poly1d(ref_coefficients)
+    ref_ys = [2**ref_polygon(s) for s in log_xs]
+    plt.plot(xs, ref_ys, ls='-', color='b', label='ref')
     
     plt.title('Root Mean Square Errors [slope={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
