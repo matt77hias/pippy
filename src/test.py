@@ -1,5 +1,5 @@
 from geometry import surface_area_hitmiss, pip_cn, pip_wn, pip_path
-from mc_tools import Configuration, vis_MSE_and_RMSE
+from mc_tools import Configuration, vis_RMSE
 import numpy as np
 
 ###################################################################################################################################################################################
@@ -24,7 +24,7 @@ def test(exp=10):
     def f_path(s): return surface_area_hitmiss(f=pip_path, p_vs=p_vs, samples=s, plot=False)
     
     for f in [f_cn, f_wn, f_path]:
-        vis_MSE_and_RMSE(f=f, config=config)
+        vis_RMSE(f=f, config=config)
         
 def test_border():
     p_vs, mean = test_polygon2()

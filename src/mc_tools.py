@@ -6,162 +6,86 @@ import numpy as np
 ################################################################################################################################################################################### 
 class Configuration(object):
     
-    def __init__(self, nb_merges=128, nb_experiments=16, nb_runs=1024, nb_samples=[2**i for i in range(1, 16)]):
+    def __init__(self, nb_merges=128, nb_experiments=1024, nb_samples=[2**i for i in range(1, 16)]):
         # Number of merges for bootstrapping
         self.nb_merges = nb_merges
-        # Number of experiments to obtain one _beta_ estimator
-        # _beta_ distribution available
-        self.nb_experiments = nb_experiments
         # Number of runs to obtain one estimator _beta_ of the MSE/RMSE of one estimator _alpha_
-        # _alpha_ distribution available
-        self.nb_runs = nb_runs
+        self.nb_experiments = nb_experiments
         # Number of samples to obtain one estimator _alpha_
         self.nb_samples = nb_samples
         
 ###################################################################################################################################################################################
-## Sequential calculation of characteristic values
-################################################################################################################################################################################### 
-def calculate_MSE(f, config=Configuration()):
-    size = len(config.nb_samples)
-    MSE = np.zeros((size))
-    for i in range(size):
-        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
-        MSE[i] = np.var(samples, ddof=1)
-    return MSE
-
-def calculate_RMSE(f, config=Configuration()):
-    size = len(config.nb_samples)
-    RMSE = np.zeros((size))
-    for i in range(size):
-        samples = np.array([f(config.nb_samples[i]) for run in range(config.nb_runs)])
-        RMSE[i] = np.std(samples, ddof=1)
-    return RMSE
-   
-###################################################################################################################################################################################
-## Parallel calculation of characteristic values
+## Parallel calculation
 ###################################################################################################################################################################################  
 from global_configuration import nb_cpus
 from multiprocessing.pool import ThreadPool as Pool
 
-def calculate(f, config=Configuration()):
+def calculate_values(f, config=Configuration()):
+    return np.array([f(s) for s in config.nb_samples])
+
+def calculate_experiments(f, config=Configuration()):
     pool = Pool(nb_cpus())
-    result = np.array(pool.map(f, range(config.nb_experiments)))
+    experiments = np.array(pool.map(lambda x: calculate_values(f=f, config=config) , range(config.nb_experiments)))
     pool.close()
     pool.join() 
-    return result
+    return experiments
     
 ###################################################################################################################################################################################
 ## Bootstrap sampling
 ################################################################################################################################################################################### 
-def bootstrap_coefficients(data, config=Configuration()):
-    # nb_experiments x len(nb_samples) -> len(nb_samples) x nb_experiments
-    tdata = np.transpose(data)
-
-    w = 1.0 / np.std( data, axis=0, ddof=1)
-
+def bootstrapping(data, config=Configuration()):
     log_nb_samples = np.log2(config.nb_samples)
+    RMSEs = np.zeros((config.nb_merges, len(config.nb_samples)))
     coefficients = np.zeros((config.nb_merges, 2))
-    for i in range(config.nb_merges):
-        values = tdata[[\
-                        np.arange(len(config.nb_samples)), \
-                        np.random.randint(size=(len(config.nb_samples)), low=0, high=config.nb_experiments)]]
-        log_values = np.log2(values)
-        coefficients[i] = np.polyfit(log_nb_samples, log_values, 1, w=w)
+    for m in range(config.nb_merges):
+        # Merging
+        size = config.nb_experiments
+        mdata = np.zeros((size, len(config.nb_samples)))
+        for j in range(size):
+            for s in range(len(config.nb_samples)):
+                re = np.random.randint(low=0, high=config.nb_experiments)
+                mdata[j, s] = data[re, s]     
+        RMSEs[m,:] = np.std(mdata, axis=0, ddof=1)
+        log_RMSE = np.log2(RMSEs[m,:])
+        # Fitting     
+        # uniform weights due to loglog scale 
+        coefficients[m,:] = np.polyfit(log_nb_samples, log_RMSE, 1)
     
-    # coefficients 
-    return np.std(coefficients, axis=0, ddof=1)
+    # std of RMSEs and coefficients 
+    return np.std(RMSEs, axis=0, ddof=1), np.std(coefficients, axis=0, ddof=1)
  
 ###################################################################################################################################################################################
 ## Visualization of characteristic values
 ###################################################################################################################################################################################
-def vis_MSE_and_RMSE(f, config=Configuration()):
+def vis_RMSE(f, config=Configuration(), plot=True, save=True):
     # nb_experiments x len(nb_samples)
-    RMSEs = calculate(f=lambda x: calculate_RMSE(f=f, config=config), config=config)
-    MSEs = RMSEs**2
+    data = calculate_experiments(f=f, config=config)
+    
+    # Select 1 RMSE
+    RMSE = np.std(data, axis=0, ddof=1)
     
     # Bootstrapping coefficients
-    coefficients_RMSE_std = bootstrap_coefficients(RMSEs, config=config)
-    print('RMSE slope std:\t\t' + str(coefficients_RMSE_std[0]))
-    print('RMSE intercept std:\t' + str(coefficients_RMSE_std[1]))
-    coefficients_MSE_std = bootstrap_coefficients(MSEs, config=config)
-    print('MSE slope std:\t\t' + str(coefficients_MSE_std[0]))
-    print('MSE intercept std:\t' + str(coefficients_MSE_std[1]))
+    RMSE_stds, coefficient_stds = bootstrapping(data, config=config)
+    print('slope RMSE:\t' + str(coefficient_stds[0]))
+    print('intercept RMSE:\t' + str(coefficient_stds[1]))
     
     # Visualization
-    _vis_RMSE(name=f.__name__, RMSEs=RMSEs, config=config)
-    _vis_MSE(name=f.__name__,  MSEs=RMSEs**2, config=config)
+    _vis_RMSE(name=f.__name__, xs=config.nb_samples, ys=RMSE, yerr=RMSE_stds, plot=plot, save=save)
 
-def vis_MSE(f, config=Configuration()):
-    # nb_experiments x len(nb_samples)
-    MSEs = calculate(f=lambda x: calculate_MSE(f=f, config=config), config=config)
-    
-    # Bootstrapping coefficients
-    coefficients_std = bootstrap_coefficients(MSEs, config=config)
-    print('MSE slope std:\t\t' + str(coefficients_std[0]))
-    print('MSE intercept std:\t' + str(coefficients_std[1]))
-    
-    # Visualization
-    _vis_MSE(name=f.__name__, MSEs=MSEs, config=config)
-
-def vis_RMSE(f, config=Configuration()):
-    # nb_experiments x len(nb_samples)
-    RMSEs = calculate(f=lambda x: calculate_RMSE(f=f, config=config), config=config)
-    
-    # Bootstrapping coefficients
-    coefficients_std = bootstrap_coefficients(RMSEs, config=config)
-    print('RMSE slope std:\t\t' + str(coefficients_std[0]))
-    print('RMSE intercept std:\t' + str(coefficients_std[1]))
-    
-    # Visualization
-    _vis_RMSE(name=f.__name__, RMSEs=RMSEs, config=config)
-
-def _vis_MSE(name, MSEs, config=Configuration(), plot=True, save=True):
+def _vis_RMSE(name, xs, ys, yerr, plot=True, save=True):
     plt.figure()
     
     # MC data
-    MSEs_mean = np.mean(MSEs, axis=0)
-    MSEs_std  = np.std( MSEs, axis=0, ddof=1)
-    plt.errorbar(config.nb_samples, MSEs_mean, yerr=MSEs_std, ls='None', marker='o', color='g', label=name)
+    plt.errorbar(xs, ys, yerr=yerr, ls='None', marker='o', color='g', label=name)
     # 1 degree polynomial reference
-    plt.plot(config.nb_samples, np.power(config.nb_samples, -1.5), ls='-', color='b', label='ref')
+    plt.plot(xs, np.power(xs, -0.5), ls='-', color='b', label='ref')
     # 1 degree polynomial fit
-    w = 1.0 / MSEs_std
-    log_nb_samples = np.log2(config.nb_samples)
-    log_MSEs_mean = np.log2(MSEs_mean)
-    fitted_coefficients = np.polyfit(log_nb_samples, log_MSEs_mean, 1, w=w)
+    log_xs = np.log2(xs)
+    log_ys = np.log2(ys)
+    fitted_coefficients = np.polyfit(log_xs, log_ys, 1)
     fitted_polygon = np.poly1d(fitted_coefficients)
-    fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
-    plt.plot(config.nb_samples, fitted_data, ls='-', color='g', label='fit')
-    
-    plt.title('Mean Square Errors [slope={0:0.4f}]'.format(fitted_coefficients[0]))
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.xlabel('# samples')
-    plt.ylabel('MSE')
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    
-    if save:
-        plt.savefig('MSE_' + name + '.png', bbox_inches='tight')
-    if not plot:
-        plt.close()
-  
-def _vis_RMSE(name, RMSEs, config=Configuration(), plot=True, save=True):
-    plt.figure()
-    
-    # MC data
-    RMSEs_mean = np.mean(RMSEs, axis=0)
-    RMSEs_std  = np.std( RMSEs, axis=0, ddof=1)
-    plt.errorbar(config.nb_samples, RMSEs_mean, yerr=RMSEs_std, ls='None', marker='o', color='g', label=name)
-    # 1 degree polynomial reference
-    plt.plot(config.nb_samples, np.power(config.nb_samples, -0.5), ls='-', color='b', label='ref')
-    # 1 degree polynomial fit
-    w = 1.0 / RMSEs_std
-    log_nb_samples = np.log2(config.nb_samples)
-    log_RMSEs_mean = np.log2(RMSEs_mean)
-    fitted_coefficients = np.polyfit(log_nb_samples, log_RMSEs_mean, 1, w=w)
-    fitted_polygon = np.poly1d(fitted_coefficients)
-    fitted_data = [2**fitted_polygon(s) for s in log_nb_samples]
-    plt.plot(config.nb_samples, fitted_data, ls='-', color='g', label='fit')
+    fitted_data = [2**fitted_polygon(s) for s in log_xs]
+    plt.plot(xs, fitted_data, ls='-', color='g', label='fit')
     
     plt.title('Root Mean Square Errors [slope={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
