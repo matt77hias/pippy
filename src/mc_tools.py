@@ -3,7 +3,7 @@ import numpy as np
 
 ###############################################################################
 ## Configuration
-############################################################################### 
+###############################################################################
 class Configuration(object):
     
     def __init__(self, nb_merges=128, nb_experiments=1024, nb_samples=[2**i for i in range(1, 16)]):
@@ -16,7 +16,7 @@ class Configuration(object):
         
 ###############################################################################
 ## Calculation
-###############################################################################  
+###############################################################################
 from global_configuration import nb_cpus
 from multiprocessing.pool import ThreadPool as Pool
 
@@ -27,7 +27,7 @@ def calculate_experiments(f, config=Configuration()):
     pool = Pool(nb_cpus())
     experiments = np.array(pool.map(lambda x: calculate_values(f=f, config=config) , range(config.nb_experiments)))
     pool.close()
-    pool.join() 
+    pool.join()
     return experiments
     
 def calculate_RMSE(data, biased=False, exact=None):
@@ -41,7 +41,7 @@ def calculate_RMSE(data, biased=False, exact=None):
     
 ###############################################################################
 ## Bootstrap sampling
-############################################################################### 
+###############################################################################
 def bootstrapping(data, config=Configuration(), biased=False, exact=None):
     log_nb_samples = np.log2(config.nb_samples)
     RMSEs = np.zeros((config.nb_merges, len(config.nb_samples)))
@@ -56,11 +56,11 @@ def bootstrapping(data, config=Configuration(), biased=False, exact=None):
                 mdata[j, s] = data[re, s]
         RMSEs[m,:] = calculate_RMSE(data=mdata, biased=biased, exact=exact)
         log_RMSE = np.log2(RMSEs[m,:])
-        # Fitting     
-        # uniform weights due to loglog scale 
+        # Fitting
+        # uniform weights due to loglog scale
         coefficients[m,:] = np.polyfit(log_nb_samples, log_RMSE, 1)
     
-    # RMSE of RMSEs and coefficients 
+    # RMSE of RMSEs and coefficients
     return np.std(RMSEs, axis=0, ddof=1), np.std(coefficients, axis=0, ddof=1)
  
 ###############################################################################
