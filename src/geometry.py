@@ -17,15 +17,15 @@ def pip_cn(p, p_vs):
     cn = 0
     p_v1 = p_vs[-1]
     for j in range(len(p_vs)):
-	p_v2 = p_vs[j]
-	# Upward crossing (Rule 1) or downward crossing (Rule 2)
-	if (p_v1[1] <= p[1] and p[1] < p_v2[1]) or (p_v1[1] > p[1] and p[1] >= p_v2[1]):
-	   # Lerp
-	   alpha = (p[1] - p_v1[1]) / (p_v2[1] - p_v1[1])
-	   # (Rule 4)
-	   if p[0] < lerp(alpha, p_v1[0], p_v2[0]):
-	       cn += 1
-	p_v1 = p_v2
+		p_v2 = p_vs[j]
+		# Upward crossing (Rule 1) or downward crossing (Rule 2)
+		if (p_v1[1] <= p[1] and p[1] < p_v2[1]) or (p_v1[1] > p[1] and p[1] >= p_v2[1]):
+		   # Lerp
+		   alpha = (p[1] - p_v1[1]) / (p_v2[1] - p_v1[1])
+		   # (Rule 4)
+		   if p[0] < lerp(alpha, p_v1[0], p_v2[0]):
+			   cn += 1
+		p_v1 = p_v2
     # even = out, odd = in
     return bool(cn & 1)
 
@@ -46,8 +46,8 @@ def pip_wn(p, p_vs):
         else:
             # Downward crossing (Rule 2) with P to the right
             if (p[1] >= p_v2[1]) and (is_left(p_v1, p_v2) < 0):
-		wn -= 1
-	p_v1 = p_v2
+				wn -= 1
+		p_v1 = p_v2
     return bool(wn)
 
 from matplotlib.path import Path
