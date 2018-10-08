@@ -46,7 +46,7 @@ def set_equal_aspect_ratio_3D(ax, xs, ys, zs, alpha=1.5, delta=0.0):
     d = 0.5 * (mx - mn)
     c = mn + d
     d = alpha * np.max(d) + delta
-    
+
     ax.set_xlim(c[0] - d, c[0] + d)
     ax.set_ylim(c[1] - d, c[1] + d)
     ax.set_zlim(c[2] - d, c[2] + d)
