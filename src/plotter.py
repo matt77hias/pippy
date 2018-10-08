@@ -52,7 +52,7 @@ class Plotter(object):
     def plot_text(self, text, p, ha='center', va='center', **kwargs):
         return
 
-    @abstractmethod  
+    @abstractmethod
     def plot_point(self, p, **kwargs):
         return
 
@@ -175,7 +175,7 @@ class Plotter3D(Plotter):
 
 ###############################################################################
 ## Plot Utilities
-###############################################################################  
+###############################################################################
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
