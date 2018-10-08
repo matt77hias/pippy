@@ -1,6 +1,9 @@
-[![License][s1]][li]
+[![License][s1]][co] [![License][s2]][li]
 
-[s1]: https://img.shields.io/badge/licence-GPL%203.0-blue.svg
+[s1]: https://api.codacy.com/project/badge/Grade/b4b3f99be7f44698a6081b4a84e65afc
+[s2]: https://img.shields.io/badge/licence-GPL%203.0-blue.svg
+
+[co]: https://www.codacy.com/app/matt77hias/pippy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=matt77hias/pippy&amp;utm_campaign=Badge_Grade
 [li]: https://raw.githubusercontent.com/matt77hias/pippy/master/LICENSE.txt
 
 # pippy
