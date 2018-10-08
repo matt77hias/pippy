@@ -6,10 +6,10 @@ from plotter import Plotter2D
 ## Point Inside Polygon
 ###############################################################################
 # Edge Crossing Rules:
-# Rule 1 : an upward edge includes its starting endpoint, and excludes its final endpoint;
-# Rule 2 : a downward edge excludes its starting endpoint, and includes its final endpoint;
-# Rule 3 : horizontal edges are excluded
-# Rule 4 : the edge-ray intersection point must be strictly right of the point P.
+# Rule 1: an upward edge includes its starting endpoint, and excludes its final endpoint;
+# Rule 2: a downward edge excludes its starting endpoint, and includes its final endpoint;
+# Rule 3: horizontal edges are excluded
+# Rule 4: the edge-ray intersection point must be strictly right of the point P.
 
 # (c) Sunday and Franklin [http://geomalgorithms.com/a03-_inclusion.html]
 def pip_cn(p, p_vs):
