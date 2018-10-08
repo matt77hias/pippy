@@ -1,10 +1,10 @@
 from math_utils import lerp
 import numpy as np
-from plotter import Plotter2D 
+from plotter import Plotter2D
 
 ###############################################################################
 ## Point Inside Polygon
-############################################################################### 
+###############################################################################
 # Edge Crossing Rules:
 # Rule 1 : an upward edge includes its starting endpoint, and excludes its final endpoint;
 # Rule 2 : a downward edge excludes its starting endpoint, and includes its final endpoint;
@@ -28,7 +28,7 @@ def pip_cn(p, p_vs):
 	p_v1 = p_v2
     # even = out, odd = in
     return bool(cn & 1)
-	
+
 # (c) Sunday [http://geomalgorithms.com/a03-_inclusion.html]
 def pip_wn(p, p_vs):
     # >0 (left), =0 (on), <0 (right)
@@ -48,16 +48,16 @@ def pip_wn(p, p_vs):
             # Downward crossing (Rule 2) with P to the right
             if (p[1] >= p_v2[1]) and (is_left(p_v1, p_v2) < 0):
 		wn -= 1
-	p_v1 = p_v2	
+	p_v1 = p_v2
     return bool(wn)
    
-from matplotlib.path import Path 
+from matplotlib.path import Path
 def pip_path(p, p_vs):
     return Path(np.concatenate([p_vs, [p_vs[0]]])).contains_point(p)
         
 ###############################################################################
 ## Surface Area
-###############################################################################     
+###############################################################################
 def surface_area_hitmiss(f, p_vs, r=None, samples=1000, rng=np.random, plot=True, plotter=None):
     if r is None:
         r = reduce(lambda acc, v: [min(acc[0], v[0]), max(acc[1], v[0]), min(acc[2], v[1]), max(acc[3], v[1])], p_vs, [np.inf, -np.inf, np.inf, -np.inf])
