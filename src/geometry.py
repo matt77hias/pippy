@@ -38,8 +38,7 @@ def pip_wn(p, p_vs):
     # Winding number counter
     wn = 0
     p_v1 = p_vs[-1]
-    for j in range(len(p_vs)):
-        p_v2 = p_vs[j]
+    for p_v2 in p_vs:
         if p_v1[1] <= p[1]:
             # Upward crossing (Rule 1) with P to the left
             if (p[1] < p_v2[1]) and (is_left(p_v1, p_v2) > 0):
