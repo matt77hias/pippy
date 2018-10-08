@@ -5,7 +5,7 @@ import numpy as np
 ## Configuration
 ###############################################################################
 class Configuration(object):
-    
+
     def __init__(self, nb_merges=128, nb_experiments=1024, nb_samples=[2**i for i in range(1, 16)]):
         # Number of merges for bootstrapping
         self.nb_merges = nb_merges
@@ -13,7 +13,7 @@ class Configuration(object):
         self.nb_experiments = nb_experiments
         # Number of samples to obtain one estimator _alpha_
         self.nb_samples = nb_samples
-        
+
 ###############################################################################
 ## Calculation
 ###############################################################################
@@ -29,7 +29,7 @@ def calculate_experiments(f, config=Configuration()):
     pool.close()
     pool.join()
     return experiments
-    
+
 def calculate_RMSE(data, biased=False, exact=None):
     if biased:
         if exact is not None:
@@ -38,7 +38,7 @@ def calculate_RMSE(data, biased=False, exact=None):
             return np.sqrt(np.mean((data - np.mean(data, axis=0))**2, axis=0, ddof=1))
     else:
         return np.std(data, axis=0, ddof=1)
-    
+
 ###############################################################################
 ## Bootstrap sampling
 ###############################################################################
@@ -59,10 +59,10 @@ def bootstrapping(data, config=Configuration(), biased=False, exact=None):
         # Fitting
         # uniform weights due to loglog scale
         coefficients[m,:] = np.polyfit(log_nb_samples, log_RMSE, 1)
-    
+
     # RMSE of RMSEs and coefficients
     return np.std(RMSEs, axis=0, ddof=1), np.std(coefficients, axis=0, ddof=1)
- 
+
 ###############################################################################
 ## Visualization
 ###############################################################################
@@ -99,14 +99,14 @@ def _vis_RMSE(name, xs, ys, yerr, exact=None, plot=True, save=True, ref_offset=1
     ref_polygon = np.poly1d(ref_coefficients)
     ref_ys = [2**ref_polygon(s) for s in log_xs]
     plt.plot(xs, ref_ys, ls='-', color='b', label='ref')
-    
+
     plt.title('Root Mean Square Errors [slope={0:0.4f}]'.format(fitted_coefficients[0]))
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('# samples')
     plt.ylabel('RMSE')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    
+
     if save:
         plt.savefig('RMSE_' + name + '.png', bbox_inches='tight')
     if not plot:
