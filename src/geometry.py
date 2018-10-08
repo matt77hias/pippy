@@ -16,8 +16,7 @@ def pip_cn(p, p_vs):
     # Crossing number counter
     cn = 0
     p_v1 = p_vs[-1]
-    for j in range(len(p_vs)):
-		p_v2 = p_vs[j]
+    for p_v2 in p_vs:
 		# Upward crossing (Rule 1) or downward crossing (Rule 2)
 		if (p_v1[1] <= p[1] and p[1] < p_v2[1]) or (p_v1[1] > p[1] and p[1] >= p_v2[1]):
 		   # Lerp
