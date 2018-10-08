@@ -82,7 +82,7 @@ def surface_area_hitmiss(f, p_vs, r=None, samples=1000, rng=np.random, plot=True
             color='r'
         if plot:
             plotter.plot_point(p, color=color)
- 
+
     return float(p_in) / samples * (window_x * window_y)
     
 def surface_area_exact(p_vs):
