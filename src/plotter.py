@@ -45,7 +45,7 @@ class Plotter(object):
         return
 
     @abstractmethod
-    def set_equal_aspect_ratio(self, nAABB, alpha=1.5, delta=0.0):
+    def set_equal_aspect_ratio(self, nAABB, alpha, delta):
         return
 
     @abstractmethod
