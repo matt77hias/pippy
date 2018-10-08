@@ -30,7 +30,7 @@ class Plotter(object):
     def clear(self):
         self.fig.clf()
 
-    @abstractmethod 
+    @abstractmethod
     def get_default_axes(self):
         return
 
@@ -126,11 +126,11 @@ class Plotter2D(Plotter):
 
 ###############################################################################
 ## Plotter3D
-############################################################################### 
+###############################################################################
 from plot_utils import set_equal_aspect_ratio_3D_AABB
 
 class Plotter3D(Plotter):
-    
+
     def __init__(self, window_title=None, title=None):
         super(Plotter3D, self).__init__(window_title=window_title, title=title)
 
@@ -148,9 +148,9 @@ class Plotter3D(Plotter):
     def plot_text(self, text, p, ha='center', va='center', **kwargs):
         self.ax.text(p[0], p[1], p[2], text, ha=ha, va=va, **kwargs)
 
-    def plot_point(self, p, **kwargs):  
+    def plot_point(self, p, **kwargs):
         self.ax.scatter([p[0]], [p[1]], [p[2]], **kwargs)
-    
+
     def plot_line(self, v1, v2, **kwargs):
         self.ax.plot([v1[0], v2[0]], [v1[1], v2[1]], [v1[2], v2[2]], **kwargs)
 
