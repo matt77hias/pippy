@@ -71,7 +71,7 @@ def surface_area_hitmiss(f, p_vs, r=None, samples=1000, rng=np.random, plot=True
         plotter.plot_contour(p_vs, color='b')
     
     p_in = 0
-    for s in range(samples):
+    for _ in range(samples):
         p = rng.random((2))
         p[0] = p[0] * window_x + r[0]
         p[1] = p[1] * window_y + r[2]
