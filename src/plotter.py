@@ -20,13 +20,13 @@ class Plotter(object):
             self.set_window_title(window_title)
         if title is not None:
             self.set_title(title)
-    
+
     def show(self):
         plt.show()
 
     def close(self):
         plt.close(self.fig)
-    
+
     def clear(self):
         self.fig.clf()
 
@@ -43,11 +43,11 @@ class Plotter(object):
     @abstractmethod
     def set_labels(self):
         return
-    
+
     @abstractmethod
     def set_equal_aspect_ratio(self, nAABB, alpha, delta):
         return
-  
+
     @abstractmethod
     def plot_text(self, text, p, ha='center', va='center', **kwargs):
         return
@@ -55,11 +55,11 @@ class Plotter(object):
     @abstractmethod  
     def plot_point(self, p, **kwargs):
         return
-    
+
     @abstractmethod
     def plot_line(self, v1, v2, **kwargs):
         return
-   
+
     def plot_contour(self, vs, **kwargs):
         nb_vs = len(vs)
         for j in range(nb_vs):
@@ -71,29 +71,29 @@ class Plotter(object):
 
     def plot_triangle(self, v1, v2, v3, **kwargs) :
         self.plot_contour([v1, v2, v3], **kwargs)
-        
+
     @abstractmethod
     def plot_sphere(self, center, radius, **kwargs):
         return
-    
+
     @abstractmethod
     def plot_AABB(self, pmin, pmax, **kwargs):
         return
-         
+
     def save(self, fname, **kwargs):
         self.fig.savefig(fname, **kwargs)
         plt.close(self.fig)
 
 ###############################################################################
 ## Plotter2D
-###############################################################################  
+###############################################################################
 from plot_utils import set_equal_aspect_ratio_2D_AABP
 
 class Plotter2D(Plotter):
-    
+
     def __init__(self, window_title=None, title=None):
         super(Plotter2D, self).__init__(window_title=window_title, title=title)
-    
+
     def get_default_axes(self):
         return self.fig.gca()
 
