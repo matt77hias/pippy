@@ -47,7 +47,7 @@ def pip_wn(p, p_vs):
             # Downward crossing (Rule 2) with P to the right
             if (p[1] >= p_v2[1]) and (is_left(p_v1, p_v2) < 0):
 				wn -= 1
-		p_v1 = p_v2
+        p_v1 = p_v2
     return bool(wn)
 
 from matplotlib.path import Path
