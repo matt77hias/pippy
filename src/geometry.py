@@ -33,8 +33,8 @@ def pip_cn(p, p_vs):
 def pip_wn(p, p_vs):
     # >0 (left), =0 (on), <0 (right)
     def is_left(a, b):
-	return (b[0] - a[0]) * (p[1] - a[1]) - (p[0] -  a[0]) * (b[1] - a[1])
-	
+        return (b[0] - a[0]) * (p[1] - a[1]) - (p[0] -  a[0]) * (b[1] - a[1])
+
     # Winding number counter
     wn = 0
     p_v1 = p_vs[-1]
@@ -50,11 +50,11 @@ def pip_wn(p, p_vs):
 		wn -= 1
 	p_v1 = p_v2
     return bool(wn)
-   
+
 from matplotlib.path import Path
 def pip_path(p, p_vs):
     return Path(np.concatenate([p_vs, [p_vs[0]]])).contains_point(p)
-        
+
 ###############################################################################
 ## Surface Area
 ###############################################################################
@@ -63,13 +63,13 @@ def surface_area_hitmiss(f, p_vs, r=None, samples=1000, rng=np.random, plot=True
         r = reduce(lambda acc, v: [min(acc[0], v[0]), max(acc[1], v[0]), min(acc[2], v[1]), max(acc[3], v[1])], p_vs, [np.inf, -np.inf, np.inf, -np.inf])
     window_x = (r[1] - r[0])
     window_y = (r[3] - r[2])
-    
+
     if plot and plotter is None:
         plotter = Plotter2D()
     if plot:
         plotter.plot_AABB([r[0], r[2]], [r[1], r[3]], color='k')
         plotter.plot_contour(p_vs, color='b')
-    
+
     p_in = 0
     for _ in range(samples):
         p = rng.random((2))
@@ -82,7 +82,7 @@ def surface_area_hitmiss(f, p_vs, r=None, samples=1000, rng=np.random, plot=True
             color='r'
         if plot:
             plotter.plot_point(p, color=color)
-          
+ 
     return float(p_in) / samples * (window_x * window_y)
     
 def surface_area_exact(p_vs):
