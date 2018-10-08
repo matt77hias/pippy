@@ -80,11 +80,11 @@ def vis_RMSE(f, config=Configuration(), biased=False, exact=None, plot=True, sav
 
 def _vis_RMSE(name, xs, ys, yerr, exact=None, plot=True, save=True, ref_offset=1.5):
     plt.figure()
-    
+
     if exact is not None and exact != 0:
         ys /= abs(exact)
         yerr /= abs(exact)
-    
+
     # RMSE errorbar
     plt.errorbar(xs, ys, yerr=yerr, ls='None', marker='o', color='g', label=name)
     # 1 degree polynomial fit
