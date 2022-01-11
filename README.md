@@ -13,16 +13,16 @@ A small *point-inside-polygon* (pip) library supporting *crossing* and *winding 
 
 ## Use
 <p align="center">
-<img src="res/samples=128.png" width="205">
-<img src="res/samples=256.png" width="205">
-<img src="res/samples=512.png" width="205">
-<img src="res/samples=1024.png" width="205">
+<img src="res/samples=128.png" width="203">
+<img src="res/samples=256.png" width="203">
+<img src="res/samples=512.png" width="203">
+<img src="res/samples=1024.png" width="203">
 </p>
 <p align="center">
-<img src="res/samples=2048.png" width="205">
-<img src="res/samples=4096.png" width="205">
-<img src="res/samples=8192.png" width="205">
-<img src="res/samples=16384.png" width="205">
+<img src="res/samples=2048.png" width="203">
+<img src="res/samples=4096.png" width="203">
+<img src="res/samples=8192.png" width="203">
+<img src="res/samples=16384.png" width="203">
 </p>
 
 ### Monte-Carlo (*hit-or-miss*) convergence behaviour
